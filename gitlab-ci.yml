@@ -7,5 +7,14 @@ main:
   script:
     - apt-get update -qq && apt-get install -y -qq lftp
     - lftp -c "set ftp:ssl-allow no; open -u $USER,$PASS $HOST; mirror -Rnev  --ignore-time --parallel=10 --exclude-glob .git* --exclude .git/ --exclude assets/ "
+    - lftp -c "set ftp:ssl-allow no; open -u $USER2,$PASS2 $HOST2; mirror -Rnev  --ignore-time --parallel=10 --exclude-glob .git* --exclude .git/ --exclude .env "
+    - lftp -c "set ftp:ssl-allow no; open -u $USER3,$PASS3 $HOST3; mirror -Rnev  --ignore-time --parallel=10 --exclude-glob .git* --exclude .git/ --exclude .env/ "
+    - lftp -c "set ftp:ssl-allow no; open -u $USER4,$PASS4 $HOST4; mirror -Rnev  --ignore-time --parallel=10 --exclude-glob .git* --exclude .git/ --exclude assets/ "
+    - lftp -c "set ftp:ssl-allow no; open -u $USER5,$PASS5 $HOST5; mirror -Rnev  --ignore-time --parallel=10 --exclude-glob .git* --exclude .git/ --exclude .env "
+    - lftp -c "set ftp:ssl-allow no; open -u $USER6,$PASS6 $HOST6; mirror -Rnev  --ignore-time --parallel=10 --exclude-glob .git* --exclude .git/ --exclude assets/ "
+    - lftp -c "set ftp:ssl-allow no; open -u $USER7,$PASS7 $HOST7; mirror -Rnev  --ignore-time --parallel=10 --exclude-glob .git* --exclude .git/ --exclude .env "
+    - lftp -c "set ftp:ssl-allow no; open -u $USER8,$PASS8 $HOST8; mirror -Rnev  --ignore-time --parallel=10 --exclude-glob .git* --exclude .git/ --exclude .env "
+    - lftp -c "set ftp:ssl-allow no; open -u $USER9,$PASS9 $HOST9; mirror -Rnev  --ignore-time --parallel=10 --exclude-glob .git* --exclude .git/ --exclude .env "
+    - lftp -c "set ftp:ssl-allow no; open -u $USER10,$PASS10 $HOST10; mirror -Rnev  --ignore-time --parallel=10 --exclude-glob .git* --exclude .git/ --exclude .env --exclude assets/ "
   only:
     - main
