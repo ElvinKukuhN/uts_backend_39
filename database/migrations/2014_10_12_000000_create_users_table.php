@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('users39', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
@@ -21,9 +21,9 @@ return new class extends Migration
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
-            $table->enum('role', ['Admin', 'User'])->default('User');
-            $table->boolean('is_aktif', [true, false])->default(false);
-            $table->string('foto');
+            $table->enum('role', ['admin', 'user'])->default('user');
+            $table->boolean('is_active');
+            $table->string('foto')->default('foto.png');
         });
     }
 

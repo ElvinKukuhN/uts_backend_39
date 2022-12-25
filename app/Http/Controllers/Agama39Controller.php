@@ -2,74 +2,91 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Agama;
+use App\Models\Agama39;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Routing\Controller;
 
 class Agama39Controller extends Controller
 {
-    public function agama39()
+    public function agamaPage39()
     {
-        if (Auth::check()) {
-            $role = Auth::user()->role;
-        } else {
-            $role = null;
+        $agama = Agama39::all();
+
+        return view('agama', ['all_agama' => $agama]);
+    }
+
+    public function editAgamaPage39(Request $request)
+    {
+        $id = $request->id;
+
+        $agama = Agama39::find($id);
+
+        if (!$agama) {
+            return back()->with('error', 'Agama tidak ditemukan');
         }
 
-        return view('agama.agama', [
-            'agamas' => Agama::all(),
-            'no' => 1,
-            'role' => $role,
-        ]);
+        $all_agama = Agama39::all();
+
+        return view('agama', ['all_agama' => $all_agama, 'agama' => $agama]);
     }
 
-    public function createAgama39()
+    public function updateAgama39(Request $request)
     {
-        if (Auth::check()) {
-            $role = Auth::user()->role;
-        } else {
-            $role = null;
+        $id = $request->id;
+        $agama = Agama39::find($id);
+
+        if (!$agama) {
+            return redirect('/agama39')->with('error', 'Agama tidak ditemukan');
         }
-        return view('agama.tambahAgama', [
-            'role' => $role
-        ]);
-    }
 
-    public function createAgama39Proses(Request $request)
-    {
-        Agama::create([
-            'nama_agama' => $request->nama_agama,
+        $request->validate([
+            'nama_agama' => 'required'
         ]);
 
-        return redirect('/agama39')->with('success', 'tambah agama berhasil');
-    }
+        $updateAgama = $agama->update([
+            'nama_agama' => $request->nama_agama
+        ]);
 
-    public function deleteAgama39Proses($id)
-    {
-        Agama::find($id)->delete();
-
-        return redirect('/agama39')->with('success', 'hapus agama berhasil');
-    }
-
-    public function updateAgama39($id)
-    {
-        if (Auth::check()) {
-            $role = Auth::user()->role;
+        if ($updateAgama) {
+            return redirect('/agama39')->with('success', 'Agama berhasil diubah');
         } else {
-            $role = null;
+            return redirect('/agama39')->with('error', 'Agama gagal diubah');
         }
-        return view('agama.updateAgama', [
-            'agama' => Agama::find($id),
-            'role' => $role
-        ]);
     }
 
-    public function updateAgama39Proses(Request $request, $id)
+    public function createAgama39(Request $request)
     {
-        $agama = Agama::find($id);
-        $agama->nama_agama = $request->nama_agama;
-        $agama->save();
-        return redirect('/agama39')->with('success', 'update agama success');
+        $request->validate([
+            'nama_agama' => 'required'
+        ]);
+
+        $createAgama = Agama39::create([
+            'nama_agama' => $request->nama_agama
+        ]);
+
+        if ($createAgama) {
+            return back()->with('success', 'Agama berhasil ditambahkan');
+        } else {
+            return back()->with('error', 'Agama gagal ditambahkan');
+        }
+    }
+
+    public function deleteAgama39(Request $request)
+    {
+        $id = $request->id;
+        $agama = Agama39::find($id);
+
+        if (!$agama) {
+            return redirect('/agama39')->with('error', 'Agama tidak ditemukan');
+        }
+
+        $deleteAgama = $agama->delete();
+
+
+        if ($deleteAgama) {
+            return redirect('/agama39')->with('success', 'Agama berhasil dihapus');
+        } else {
+            return redirect('/agama39')->with('error', 'Agama gagal dihapus');
+        }
     }
 }

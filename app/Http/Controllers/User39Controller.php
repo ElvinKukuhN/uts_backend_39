@@ -2,134 +2,223 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Agama;
 use App\Models\User;
-use Illuminate\Contracts\Session\Session;
+use App\Models\Agama39;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class User39Controller extends Controller
 {
-    public function users39()
+
+    public function profilePage39()
     {
-        if (Auth::check()) {
-            $role = Auth::user()->role;
-        } else {
-            $role = null;
-        }
-        $users = collect(User::where('role', 'User')->get());
-        return view('user.users', [
-            'no' => 1,
-            'users' => $users->sortBy('is_aktif', false),
-            'role' => $role
-        ]);
+        $user = Auth::user();
+        $agama = Agama39::all();
+        $usersData = User::with("detail")->where("id", $user->id)->first();
+        $detail = $usersData->detail;
+        $all_data = array_merge($usersData->toArray(), $detail->toArray());
+
+        return view('profile', ['user' => $all_data, 'agama' => $agama, 'is_preview' => false]);
     }
 
-    public function profile39()
+    public function dashboardPage39()
     {
-        if (Auth::check()) {
-            $role = Auth::user()->role;
-        } else {
-            $role = null;
-        }
-        return view('user.profile', [
-            'role' => $role
-        ]);
+        $user = User::where('role', 'user')->get();
+        $agama = Agama39::all();
+
+        return view('dashboard', ['data' => $user, 'agama' => $agama]);
     }
 
-    public function detailUser39($id)
+    public function detailPage39(Request $request, $id)
     {
-        if (Auth::check()) {
-            $role = Auth::user()->role;
-        } else {
-            $role = null;
+        $user = User::with('detail')->find($id);
+
+        if (!$user) {
+            return back()->with('error', 'User tidak ditemukan');
         }
+
+        $agama = Agama39::all();
+
+        return view('profile', ['user' => $user, 'agama' => $agama, 'is_preview' => true]);
+    }
+
+    public function putUserDetail39(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:users39,email,' . $user->id,
+            'alamat' => 'required',
+            'tempat_lahir' => 'required',
+            'tanggal_lahir' => 'required',
+            'id_agama' => 'required',
+        ]);
+
+        $userData = User::find($user->id);
+        $detail = User::find($user->id)->detail;
+
+        $isAgamaValid = Agama39::find($request->id_agama);
+
+        if (!$isAgamaValid) {
+            return back()->with('error', 'Agama tidak valid');
+        }
+
+        $userData->name = $request->name;
+        $userData->email = $request->email;
+        $saveUser = $userData->save();
+
+        $detail->alamat = $request->alamat;
+        $detail->tempat_lahir = $request->tempat_lahir;
+        $detail->tanggal_lahir = $request->tanggal_lahir;
+        $detail->id_agama = $request->id_agama;
+        $detail->umur = date_diff(date_create($request->tanggal_lahir), date_create('now'))->y;
+        $saveDetail = $detail->save();
+
+        if ($saveUser && $saveDetail) {
+            return back()->with('success', 'Update profile berhasil');
+        } else {
+            return back()->with('error', 'Update profile gagal');
+        }
+    }
+
+    public function putUserStatus39(Request $request, $id)
+    {
 
         $user = User::find($id);
 
-        return view('user.detailUser', [
-            'user' => $user,
-            'role' => $role,
-        ]);
-    }
-
-    // ===aprove user===
-    public function approveUser39($id)
-    {
-        $user = User::find($id);
-        $user->is_aktif = true;
-        $user->save();
-
-        return redirect('/users39')->with('success', 'Success Aprove');
-    }
-
-    public function deleteUser39($id)
-    {
-        User::find($id)->delete();
-        return redirect('/users39')->with('success', 'Success delete');
-    }
-
-    public function login39()
-    {
-        return view('user.login');
-    }
-
-    public function loginProses39(Request $request)
-    {
-        if (Auth::attempt([
-            'email' => $request->email,
-            'password' => $request->password
-        ])) {
-            return redirect('/');
+        if (!$user) {
+            return back()->with('error', 'User tidak ditemukan');
         }
-        return redirect('/login39')->with('error', 'Email or password wrong');
+
+        $updateStatus = $user->update([
+            'is_active' => $user->is_active == 1 ? 0 : 1
+        ]);
+
+        if ($updateStatus) {
+            return back()->with('success', 'Status berhasil diubah');
+        } else {
+            return back()->with('error', 'Status gagal diubah');
+        }
     }
 
-    public function logout39(Request $request)
+    public function putUserAgama39(Request $request, $id)
+    {
+        $user = User::with('detail')->find($id);
+
+        if (!$user) {
+            return back()->with('error', 'User tidak ditemukan');
+        }
+
+        $request->validate([
+            'agama' => 'required|exists:agama39,id'
+        ]);
+
+        $user->detail->update([
+            'id_agama' => $request->agama
+        ]);
+
+        $updateAgama = $user->detail->save();
+
+        if ($updateAgama) {
+            return back()->with('success', 'Agama berhasil diubah');
+        } else {
+            return back()->with('error', 'Agama gagal diubah');
+        }
+    }
+
+    public function putUserPhotoKTP39()
+    {
+        $user = Auth::user();
+        $detail = User::find($user->id)->detail;
+
+        Validator::make(request()->all(), [
+            'photoKTP' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ])->validate();
+
+        if ($detail->foto_ktp != "foto_ktp.png") {
+            if (file_exists(public_path('photo/' . $detail->foto_ktp))) {
+                unlink(public_path('photo/' . $detail->foto_ktp));
+            }
+        }
+
+        $file = request()->file('photoKTP');
+        $fileName = time() . '.' . $file->getClientOriginalExtension();
+        $file->move(public_path('photo/'), $fileName);
+
+        $detail->foto_ktp = $fileName;
+        $savePhoto = $detail->save();
+
+        if ($savePhoto) {
+            return back()->with('success', 'Upload foto ktp berhasil');
+        } else {
+            return back()->with('error', 'Upload foto ktp gagal');
+        }
+    }
+
+    public function putUserPhoto39(Request $request)
+    {
+        $user = Auth::user();
+        $detail = User::find($user->id);
+
+
+        Validator::make(request()->all(), [
+            'photoProfil' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ])->validate();
+
+
+        if ($detail->foto != "foto.png") {
+            if (file_exists(public_path('photo/' . $detail->foto))) {
+                unlink(public_path('photo/' . $detail->foto));
+            }
+        }
+
+
+        $file = request()->file('photoProfil');
+
+        $fileName = time() . '.' . $file->getClientOriginalExtension();
+        $file->move(public_path('photo/'), $fileName);
+
+        $detail->foto = $fileName;
+
+        $savePhoto = $detail->save();
+        if ($savePhoto) {
+            return back()->with('success', 'Upload foto profil berhasil');
+        } else {
+            return back()->with('error', 'Upload foto profil gagal');
+        }
+    }
+
+    public function putUserPassword39(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            'old_password' => 'required|min:8',
+            'password' => 'required|min:8',
+            'repassword' => 'required|same:password',
+        ]);
+
+        $userData = User::find($user->id);
+
+        if (!Hash::check($request->old_password, $userData->password)) {
+            return back()->with('error', 'Password lama tidak sesuai');
+        }
+
+        $userData->password = bcrypt($request->password);
+        $saveUser = $userData->save();
+
+        if ($saveUser) {
+            return back()->with('success', 'Update password berhasil');
+        } else {
+            return back()->with('error', 'Update password gagal');
+        }
+    }
+
+    public function logout39()
     {
         Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect('/');
-    }
-
-    public function register39()
-    {
-        return view('user.register');
-    }
-
-    public function registerProses39(Request $request)
-    {
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-            'remember_token' => Str::random(60),
-            'foto' => $request->foto
-        ]);
-
-        if ($request->hasFile('foto')) {
-            $request->file('foto')->move('img/', $request->file('foto')->getClientOriginalName());
-            $user->foto = $request->file('foto')->getClientOriginalName();
-            $user->save();
-        }
-
-
-        return redirect('/login39')->with('success', 'register success');
-    }
-
-    public function updatePassword39()
-    {
-        return view('user.updatePassword');
-    }
-
-    public function updatePasswordProses39(Request $request, $id)
-    {
-        $user = User::find($id);
-        $user->password = bcrypt($request->password);
-        $user->save();
-
-        return redirect('/profile39')->with('success', 'update password success');
+        return redirect('/login39');
     }
 }

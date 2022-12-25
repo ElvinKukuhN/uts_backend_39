@@ -17,62 +17,74 @@ use Illuminate\Support\Facades\Auth;
 |
 */
 
+//
 Route::get('/', function () {
-
-    if (Auth::check()) {
-        $role = Auth::user()->role;
-    } else {
-        $role = null;
-    }
-
-    return view('dashboard', [
-        'role' => $role
-    ]);
-})->name('index39');
-
-Route::middleware(['auth', 'hakakses:role'])->group(function () {
-
-    // User
-    Route::get('/users39', [User39Controller::class, 'users39'])->name('users39');
-    Route::get('/detailUser39/{id}', [User39Controller::class, 'detailUser39'])->name('detailUser39');
-    Route::get('/profile39', [User39Controller::class, 'profile39'])->name('profile39');
-
-
-    Route::get('/updatePassword39', [User39Controller::class, 'updatePassword39'])->name('updatePassword39');
-    Route::post('/updatePasswordProses39/{id}', [User39Controller::class, 'updatePasswordProses39'])->name('updatePasswordProses39');
-
-
-    Route::get('/register39', [User39Controller::class, 'register39'])->name('register39');
-    Route::post('/registerProses39', [User39Controller::class, 'registerProses39'])->name('registerProses39');
-
-    Route::get('/logout39', [User39Controller::class, 'logout39'])->name('logout39');
-
-    // Detail data
-    Route::get('/detailData39', [Detail_data39Controller::class, 'detailData39'])->name('detailData39');
-
-    Route::get('/createData39', [Detail_data39Controller::class, 'createData39'])->name('createData39');
-    Route::post('/createDataProses39', [Detail_data39Controller::class, 'createDataProses39'])->name('createDataProses39');
-
-    Route::get('/updateData39', [Detail_data39Controller::class, 'updateData39'])->name('updateData39');
-    Route::post('/updateDataProses39', [Detail_data39Controller::class, 'updateDataProses39'])->name('updateDataProses39');
+    return redirect('/login39');
 });
 
-Route::middleware(['auth', 'hakadmin:role'])->group(function () {
-    // agama
-    Route::get('/agama39', [Agama39Controller::class, 'agama39'])->name('agama39');
-
-    Route::get('/createAgama39', [Agama39Controller::class, 'createAgama39'])->name('createAgama39');
-    Route::post('/createAgama39Proses', [Agama39Controller::class, 'createAgama39Proses'])->name('createAgama39Proses');
-
-    Route::get('/deleteAgama39Proses/{id}', [Agama39Controller::class, 'deleteAgama39Proses'])->name('deleteAgama39Proses');
-
-    Route::get('/updateAgama39/{id}', [Agama39Controller::class, 'updateAgama39'])->name('updateAgama39');
-    Route::post('/updateAgama39Proses/{id}', [Agama39Controller::class, 'updateAgama39Proses'])->name('updateAgama39Proses');
-
-    // user
-    Route::get('/deleteUser39/{id}', [User39Controller::class, 'deleteUser39'])->name('deleteUser39');
-    Route::get('/approveUser39/{id}', [User39Controller::class, 'approveUser39'])->name('approveUser39');
+Route::group(['middleware' => ['isNotLogin']], function () {
+    // Register Login
+    Route::view('/register39', 'register');
+    Route::view('/login39', 'login');
+    Route::post('/register39', [App\Http\Controllers\Register39Controller::class, 'register39']);
+    Route::post('/login39', [App\Http\Controllers\Login39Controller::class, 'login39']);
 });
 
-Route::get('/login39', [User39Controller::class, 'login39'])->name('login39');
-Route::post('/loginProses39', [User39Controller::class, 'loginProses39'])->name('loginProses39');
+// Role Admin
+Route::group(['middleware' => ['isAdmin']], function () {
+
+    // API DATA USER
+    Route::get('/dashboard39', [User39Controller::class, 'dashboardPage39']);
+    Route::get('/user39/{id}', [User39Controller::class, 'detailPage39']);
+    Route::get('/user39/{id}/status', [User39Controller::class, 'putUserStatus39']);
+    Route::post('/user39/{id}/agama', [User39Controller::class, 'putUserAgama39']);
+    Route::get('/user39/{id}/delete', [User39Controller::class, 'deleteUser39']);
+
+    // API AGAMA
+    Route::get("/agama39", [Agama39Controller::class, "agamaPage39"]);
+    Route::post("/agama39", [Agama39Controller::class, "createAgama39"]);
+    Route::get("/agama39/{id}/edit", [Agama39Controller::class, "editAgamaPage39"]);
+    Route::post("/agama39/{id}/update", [Agama39Controller::class, "updateAgama39"]);
+    Route::get("/agama39/{id}/delete", [Agama39Controller::class, "deleteAgama39"]);
+
+    // API CLIENT DATA USER
+    Route::get("/apiclient/dashboard39", [ClientUser39Controller::class, "dashboardPage39"]);
+    Route::get("/apiclient/user39/{id}", [ClientUser39Controller::class, "detailPage39"]);
+    Route::get("/apiclient/user39/{id}/status", [ClientUser39Controller::class, "putUserStatus39"]);
+    Route::post("/apiclient/user39/{id}/agama", [ClientUser39Controller::class, "putUserAgama39"]);
+    Route::get("/apiclient/user39/{id}/delete", [ClientUser39Controller::class, "deleteUser39"]);
+
+    // API CLIENT AGAMA
+    Route::get("/apiclient/agama39", [ClientAgama39Controller::class, "agamaPage39"]);
+    Route::get("/apiclient/agama39/{id}/edit", [ClientAgama39Controller::class, "editAgamaPage39"]);
+    Route::post("/apiclient/agama39", [ClientAgama39Controller::class, "createAgama39"]);
+    Route::post("/apiclient/agama39/{id}/update", [ClientAgama39Controller::class, "updateAgama39"]);
+    Route::get("/apiclient/agama39/{id}/delete", [ClientAgama39Controller::class, "deleteAgama39"]);
+});
+
+
+// Role User
+Route::group(['middleware' => ['isUser']], function () {
+
+    // API User
+    Route::view('/changePassword39', 'editPW');
+    Route::get('/profile39', [User39Controller::class, 'profilePage39']);
+    Route::post('/user39', [User39Controller::class, 'putUserDetail39']);
+    Route::post('/user39/photo', [User39Controller::class, 'putUserPhoto39']);
+    Route::post('/user39/photoKTP', [User39Controller::class, 'putUserPhotoKTP39']);
+    Route::post('/user39/password', [User39Controller::class, 'putUserPassword39']);
+
+    // API Client User
+    Route::view('/apiclient/changePassword39', 'editPW', ['Use_API' => true]);
+    Route::get('/apiclient/profile39', [ClientUser39Controller::class, 'profilePage39']);
+    Route::post('/apiclient/user39', [ClientUser39Controller::class, 'putUserDetail39']);
+    Route::post('/apiclient/user39/photo', [ClientUser39Controller::class, 'putUserPhoto39']);
+    Route::post('/apiclient/user39/photoKTP', [ClientUser39Controller::class, 'putUserPhotoKTP39']);
+    Route::post('/apiclient/user39/password', [ClientUser39Controller::class, 'putUserPassword39']);
+});
+
+// Welcome Page
+Route::get('/halo39', [App\Http\Controllers\Halo39Controller::class, 'halo39']);
+
+// Logout Session
+Route::get('/logout39', [User39Controller::class, 'logout39'])->middleware('isLogin');

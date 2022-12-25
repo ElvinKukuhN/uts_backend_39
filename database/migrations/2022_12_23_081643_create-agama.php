@@ -13,15 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('detail_datas', function (Blueprint $table) {
+        Schema::create('agama39', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('id_user');
-            $table->string('alamat');
-            $table->string('tempat_lahir');
-            $table->date('tanggal_lahir');
-            $table->foreignId('id_agama');
-            $table->string('foto_ktp');
-            $table->integer('umur');
+            $table->string('nama_agama');
             $table->timestamps();
         });
     }
@@ -33,6 +27,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('detail_datas');
+        Schema::dropIfExists('agama');
     }
 };
